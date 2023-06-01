@@ -26,9 +26,9 @@ from pgmpy.sampling import BayesianModelSampling
 
 samples = pd.read_csv('DatosFinalP3.csv')
 
-
+'''
 # In[4]:
-    
+
 from pgmpy.estimators import HillClimbSearch
 from pgmpy.estimators import K2Score
 scoring_method = K2Score(data=samples)
@@ -80,11 +80,105 @@ estimated_model.check_model()
 from pgmpy.inference import VariableElimination
 infer = VariableElimination (estimated_model)
 
+'''
 
 
 
-    
-# In[5]:
+
+################################################################################################
+#--------------------------------------VISUALIZACIONES-----------------------------------------#
+###############################################################################################
+
+# Crear las visualizaciones
+df = pd.read_csv('Datos_Raw.csv')
+
+# Verificar una figura para comparar el colegio con el promedio de pruebas icfes
+df_col1 = df.groupby(["cole_jornada"], as_index=False)["punt_global"].mean()
+print(df_col1)
+fig2 = px.bar(df_col1, x = "cole_jornada", y = "punt_global", barmode='group')
+fig2.update_layout(
+    xaxis_title="Jornada del colegio",
+    yaxis_title="Promedio puntaje prueba",
+    font=dict(size=12, color='black'),
+    legend=dict(title='', font=dict(size=12)),
+    margin=dict(t=80),
+    plot_bgcolor='white',
+    coloraxis=dict(colorbar=dict(title='', tickfont=dict(size=12)), colorbar_len=0.3),
+)
+fig2.update_layout(
+    width=1000,
+    height=500
+)
+
+
+
+# Obtener los datos agrupados
+df_col2 = df.groupby(["fami_estratovivienda", "cole_area_ubicacion"], as_index=False)["punt_global"].mean()
+
+# Agregar columna de orden de estrato
+df_col2['orden_estrato'] = np.where(df_col2['fami_estratovivienda'] == 'Sin Estrato', 0, 1)
+
+# Ordenar el DataFrame por orden de estrato y fami_estratovivienda
+df_col2 = df_col2.sort_values(by=['orden_estrato', 'fami_estratovivienda'])
+
+# Crear la gráfica
+fig3 = px.line(df_col2, x='fami_estratovivienda', y='punt_global', color='cole_area_ubicacion')
+
+fig3.update_layout(
+    xaxis_title="Estrato",
+    yaxis_title="Puntaje promedio prueba",
+    font=dict(size=12, color='black'),
+    legend=dict(title='', font=dict(size=12)),
+    margin=dict(t=80),
+    plot_bgcolor='white',
+    coloraxis=dict(colorbar=dict(title='', tickfont=dict(size=12)), colorbar_len=0.3)
+)
+fig3.update_layout(
+    width=1000,
+    height=500
+)
+
+# Mostrar la gráfica
+
+
+
+# Definir el orden personalizado de las categorías
+order = ["Una", "Dos", "Tres", "Cuatro", "Cinco", "Seis", "Siete", "Ocho", "Nueve", "Diez", "Once", "Doce o más"]
+
+# Filtrar el DataFrame para las categorías seleccionadas
+selected_categories = ["Una", "Dos", "Tres", "Cuatro", "Cinco", "Seis", "Siete", "Ocho", "Nueve", "Diez", "Once", "Doce o más"]
+df_filtered = df[df['fami_personashogar'].isin(selected_categories)]
+
+# Obtener los datos agrupados
+df_col3 = df_filtered.groupby(["fami_estratovivienda", "fami_personashogar"], as_index=False)["punt_global"].mean()
+
+# Crear una columna para el orden personalizado
+df_col3['order'] = pd.Categorical(df_col3['fami_personashogar'], categories=order, ordered=True)
+
+# Ordenar el DataFrame por el orden personalizado
+df_col3 = df_col3.sort_values(by=['fami_estratovivienda', 'order'])
+
+# Crear la gráfica
+fig4 = px.line(df_col3, x='fami_personashogar', y='punt_global', color='fami_estratovivienda')
+
+# Mostrar la gráfica
+
+fig4.update_layout(
+    xaxis_title="Personas en el hogar",
+    yaxis_title="Puntaje promedio prueba",
+    font=dict(size=12, color='black'),
+    legend=dict(title='', font=dict(size=12)),
+    margin=dict(t=80),
+    plot_bgcolor='white',
+    coloraxis=dict(colorbar=dict(title='', tickfont=dict(size=12)), colorbar_len=0.3)
+)
+fig4.update_layout(
+    width=1000,
+    height=500
+)
+
+
+
 
 ################################################################################################
 #-----------------------------------FRONT DE LA APLICACIÓN-------------------------------------#
@@ -93,7 +187,7 @@ uniandes = 'https://uniandes.edu.co/sites/default/files/logo-uniandes.png'
 costa = 'https://web.comisiondelaverdad.co/images/zoo/territorios/caribe-insularnuevo.jpg'
 ifex = 'https://www.icfes.gov.co/documents/39286/0/logo-prueba-2022_11.png/b3f43026-92c4-09c5-c034-527faf7952ca?t=1652155271251&download=true'
 mined = 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/MinEducaci%C3%B3n_%28Colombia%29_logo.png/1200px-MinEducaci%C3%B3n_%28Colombia%29_logo.png'
-nenes = 'https://pbs.twimg.com/media/FWX0IJRXgAAyULU?format=png&name=small'
+nenes = 'https://www.elheraldo.co/sites/default/files/articulo/2022/09/05/whatsapp_image_2022-09-05_at_05.51.43.jpeg'
 import dash_bootstrap_components as dbc
 app = dash.Dash(external_stylesheets=[dbc.themes.LITERA])
 
@@ -295,18 +389,18 @@ tab2_content = dbc.Card(
             html.Div([
                 dcc.Graph(
                         id='heatmap',
-                        
+                        figure = fig2
                     )
-            ], style={'margin':'30px'}),
+            ], style={'text-align':'center'}),
             html.Br(),
             
             html.Div([
                 
                 dcc.Graph(
                         id='heatmap',
-                        
+                        figure = fig3
                     )
-            ],style={'margin':'30px'}),
+            ],style={'text-align':'center'}),
             
             html.Br(),
             
@@ -314,11 +408,11 @@ tab2_content = dbc.Card(
                 
                 dcc.Graph(
                         id='heatmap',
-                        
+                        figure = fig4
                     )
-            ],style={'margin':'30px'})
+            ],style={'text-align':'center'})
             
-           ], style={'margin-left':'75px'}) 
+           ], style={'margin-left':'375px'}) 
         ]
     ),
     className="mt-3", style={'border': 'none', 'background-color': 'transparent','width': '100%', 'height': '100%'}
