@@ -28,8 +28,7 @@ samples = pd.read_csv('DatosFinalP3.csv')
 
 
 # In[4]:
-
-'''
+    
 from pgmpy.estimators import HillClimbSearch
 from pgmpy.estimators import K2Score
 scoring_method = K2Score(data=samples)
@@ -38,6 +37,8 @@ estimated_modelh = esth.estimate(
     scoring_method=scoring_method, max_indegree=7, max_iter=int(1e4))
 #
 print(estimated_modelh)
+
+
 
 
 
@@ -60,16 +61,29 @@ nx.draw_networkx_labels(G, pos, font_size=10, font_family="sans-serif") # Agrega
 plt.axis("off") # Ocultar los ejes
 plt.title("Modelo Estimado")
 plt.show() # Mostrar el gráfico
+    
+    
 
 
 print(scoring_method.score(estimated_modelh))
-'''
+
+from pgmpy.models import BayesianNetwork
+from pgmpy.estimators import MaximumLikelihoodEstimator
+
+estimated_model = BayesianNetwork(estimated_modelh)
+estimated_model.fit(data=samples, estimator = MaximumLikelihoodEstimator) 
+for i in estimated_model.nodes():
+    print(estimated_model.get_cpds(i))
+
+estimated_model.check_model()
+
+from pgmpy.inference import VariableElimination
+infer = VariableElimination (estimated_model)
 
 
 
 
-
-
+    
 # In[5]:
 
 ################################################################################################
@@ -79,7 +93,7 @@ uniandes = 'https://uniandes.edu.co/sites/default/files/logo-uniandes.png'
 costa = 'https://web.comisiondelaverdad.co/images/zoo/territorios/caribe-insularnuevo.jpg'
 ifex = 'https://www.icfes.gov.co/documents/39286/0/logo-prueba-2022_11.png/b3f43026-92c4-09c5-c034-527faf7952ca?t=1652155271251&download=true'
 mined = 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/MinEducaci%C3%B3n_%28Colombia%29_logo.png/1200px-MinEducaci%C3%B3n_%28Colombia%29_logo.png'
-nenes = 'https://laguajirahoy.com/wp-content/uploads/2015/09/Cien-estudiantes-de-los-grados-noveno-d%C3%A9cimo-y-once-de-cuatro-instituciones.jpg'
+nenes = 'https://pbs.twimg.com/media/FWX0IJRXgAAyULU?format=png&name=small'
 import dash_bootstrap_components as dbc
 app = dash.Dash(external_stylesheets=[dbc.themes.LITERA])
 
@@ -331,11 +345,27 @@ app.layout = html.Div([
               Input("fami_personashogar","value"),Input("fami_tienecomputador","value"),Input("fami_tieneinternet","value"))
 
 
-def run_query(n_clicks, age, trestbps, chol, fbs, sex, restecg, thalach,cp,exang):
+def run_query(n_clicks,cole_area_ubicacion, cole_bilingue,cole_calendario,
+              cole_caracter,cole_jornada,cole_naturaleza,fami_estratovivienda,
+              fami_personashogar,fami_tienecomputador,fami_tieneinternet):
     if n_clicks is not None:
-        posterior_p2 = infer.query(["Num"], evidence={"Age": age, "Trestbps": trestbps, "Chol": chol, "Fbs": fbs, "Sex": sex,"Restecg": restecg,"Thalach": thalach,"CP": cp,"Exang": exang})
-        suma = posterior_p2.values[1]+posterior_p2.values[2]+posterior_p2.values[3]+posterior_p2.values[4]
-        return f"La probabilidad del paciente de tener la enfermedad es de: {round(suma*100,2)}%"
+        posterior_p2 = infer.query(["punt_global"], evidence={"cole_area_ubicacion": cole_area_ubicacion,
+                                                              "cole_bilingue": cole_bilingue, "cole_calendario": cole_calendario,
+                                                              "cole_caracter": cole_caracter, "cole_jornada": cole_jornada,"cole_naturaleza": cole_naturaleza,
+                                                              "fami_estratovivienda": fami_estratovivienda,"fami_personashogar": fami_personashogar,
+                                                              "fami_tienecomputador": fami_tienecomputador,"fami_tieneinternet":fami_tieneinternet})
+        
+        # Obtener los nombres de los estados y los valores de probabilidad
+        estados_punt_global = posterior_p2.state_names["punt_global"]
+        probabilidades_punt_global = posterior_p2.values
+        
+        # Obtener el índice del valor con mayor probabilidad
+        indice_max_probabilidad = np.argmax(probabilidades_punt_global)
+        
+        # Obtener el valor de "punt_global" con mayor probabilidad
+        valor_max_probabilidad = estados_punt_global[indice_max_probabilidad]
+
+        return f"El valor de 'punt_global' con mayor probabilidad es:, {valor_max_probabilidad:}"
 if __name__ == '__main__':
     app.run_server(debug=False)
     
