@@ -26,26 +26,27 @@ from pgmpy.sampling import BayesianModelSampling
 
 samples = pd.read_csv('DatosFinalP3.csv')
 
-'''
-# In[4]:
 
 from pgmpy.estimators import HillClimbSearch
 from pgmpy.estimators import K2Score
+from pgmpy.models import BayesianNetwork
+from pgmpy.estimators import MaximumLikelihoodEstimator
+from pgmpy.inference import VariableElimination
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# Realizar la búsqueda de HillClimb
 scoring_method = K2Score(data=samples)
 esth = HillClimbSearch(data=samples)
 estimated_modelh = esth.estimate(
-    scoring_method=scoring_method, max_indegree=7, max_iter=int(1e4))
-#
+    scoring_method=scoring_method, max_indegree=2, max_iter=int(1e4))
+
+# Imprimir el modelo estimado
 print(estimated_modelh)
 
-
-
-
-
+# Imprimir los nodos y las aristas del modelo estimado
 print(estimated_modelh.nodes())
 print(estimated_modelh.edges())
-import networkx as nx
-import matplotlib.pyplot as plt
 
 # Crear el gráfico dirigido del modelo
 G = nx.DiGraph()
@@ -53,34 +54,26 @@ for parent, child in estimated_modelh.edges():
     G.add_edge(parent, child)
 
 # Dibujar el gráfico del modelo
-pos = nx.spring_layout(G, seed=42) # Asignar posiciones a los nodos
-nx.draw_networkx_nodes(G, pos, node_color="lightblue", node_size=500) # Dibujar nodos
-nx.draw_networkx_edges(G, pos, arrows=True) # Dibujar arcos con flechas
-nx.draw_networkx_labels(G, pos, font_size=10, font_family="sans-serif") # Agregar etiquetas de nodos
+pos = nx.spring_layout(G, seed=42)  # Asignar posiciones a los nodos
+nx.draw_networkx_nodes(G, pos, node_color="lightblue", node_size=500)  # Dibujar nodos
+nx.draw_networkx_edges(G, pos, arrows=True)  # Dibujar arcos con flechas
+nx.draw_networkx_labels(G, pos, font_size=10, font_family="sans-serif")  # Agregar etiquetas de nodos
 
-plt.axis("off") # Ocultar los ejes
+plt.axis("off")  # Ocultar los ejes
 plt.title("Modelo Estimado")
-plt.show() # Mostrar el gráfico
-    
-    
+plt.show()  # Mostrar el gráfico
 
-
+# Calcular el puntaje del modelo estimado
 print(scoring_method.score(estimated_modelh))
 
-from pgmpy.models import BayesianNetwork
-from pgmpy.estimators import MaximumLikelihoodEstimator
-
+# Crear el modelo bayesiano y ajustarlo a los datos
 estimated_model = BayesianNetwork(estimated_modelh)
-estimated_model.fit(data=samples, estimator = MaximumLikelihoodEstimator) 
+estimated_model.fit(data=samples, estimator=MaximumLikelihoodEstimator)
 for i in estimated_model.nodes():
     print(estimated_model.get_cpds(i))
 
-estimated_model.check_model()
-
-from pgmpy.inference import VariableElimination
-infer = VariableElimination (estimated_model)
-
-'''
+# Realizar inferencia en el modelo
+infer = VariableElimination(estimated_model)
 
 
 
@@ -468,3 +461,5 @@ if __name__ == '__main__':
 
 
 
+
+# %%
